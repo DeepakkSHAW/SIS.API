@@ -23,8 +23,21 @@ namespace SIS.API.SISDB
         internal static string qGetCategories { get; } = "SELECT * from TCategories order by Category ASC";
         internal static string qGetStatusType { get; } = "SELECT * from TStatusType order by Status ASC";
 
+       internal static readonly string qGetRediffCode = "SELECT TStocks.StockID, TStocks.StockName, " +
+            "TStockDetails.RCode FROM (TStatusType " +
+            "INNER JOIN TStocks ON TStatusType.StatusID = TStocks.StockStatusID) " +
+            "INNER JOIN TStockDetails ON TStocks.StockID = TStockDetails.StockID " +
+            "WHERE TStatusType.Status= @StatusType";
 
-
+     internal static readonly string qGetYahooCode = "SELECT TStocks.StockID, TStocks.StockName, " +
+     "TStockDetails.YFCode FROM (TStatusType " +
+     "INNER JOIN TStocks ON TStatusType.StatusID = TStocks.StockStatusID) " +
+     "INNER JOIN TStockDetails ON TStocks.StockID = TStockDetails.StockID " +
+     "WHERE TStatusType.Status= @StatusType";
+        internal static readonly string qInsertLatestStockPrice = "INSERT INTO [TRates] ('StockID', 'Price','Ondate') VALUES ";// ({0},{1},'{2}')";
+        internal static readonly string qGetLatestStockPrice = "select t.StockID, t.Ondate, t.Price from TRates t inner join " +
+            "(select StockID, max(Ondate) as MaxDate from TRates group by StockID) " +
+            "tm on t.StockID = tm.StockID and t.Ondate = tm.MaxDate ORDER by t.StockID ASC";
     }
 }
 
