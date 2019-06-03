@@ -26,13 +26,12 @@ namespace SIS.API
                 sp.StockName = (string)o["Value"]["SName"];
                 spCollection.Add(sp);
                 iCount++;
-                // if (iCount > 9) break; //[DK: remove] just for test
+                 if (iCount > 9) break; //[DK: remove] just for test
             }
             if (await SISDBContext.StockPriceBulkUpdatedbAsync(spCollection))
                 return spCollection;
             else
-                throw new Exception { Source = "DownloadAndSync_Rediff" };
-            //Message ="Stock price has not been updated" };
+                throw new Exception ("DownloadAndSync_Rediff: Unable to update the latest Stock Price into database");
         }
         internal static async Task<List<StockPrice>> DownloadAndSync_Yahoo()
         {
@@ -54,8 +53,7 @@ namespace SIS.API
             if (await SISDBContext.StockPriceBulkUpdatedbAsync(spCollection))
                 return spCollection;
             else
-                throw new Exception { Source = "DownloadAndSync_Yahoo" };
-            //Message ="Stock price has not been updated" };
+                throw new Exception("DownloadAndSync_Yahoo: Unable to update the latest Stock Price into database");
         }
     }
 }

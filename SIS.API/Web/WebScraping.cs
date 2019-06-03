@@ -14,14 +14,14 @@ namespace SIS.API.Web
     {
         private static async Task<string> GetWebRespose(string uri)
         {
-            var webProxy = new WebProxy(new Uri(@"http://192.168.0.1:8000"), BypassOnLocal: false);
-            webProxy.Credentials = new NetworkCredential("ID", "PWD");
+            var webProxy = new WebProxy(new Uri(@"http://192.168.0.1:8000"/*Configurable*/), BypassOnLocal: false);
+            webProxy.Credentials = new NetworkCredential("ID", "PWD"/*Configurable*/);
 
             var proxyHttpClientHandler = new HttpClientHandler { Proxy = webProxy, UseProxy = false, UseDefaultCredentials = true };
             var httpClient = new System.Net.Http.HttpClient(proxyHttpClientHandler)
             {
                 //BaseAddress = new Uri( sURL), //not needed since this is not an API based call
-                Timeout = new TimeSpan(0, 5, 0),
+                Timeout = new TimeSpan(0, 5/*Configurable*/, 0),
                 MaxResponseContentBufferSize = 1024 * 1024,
             };
             try
@@ -69,7 +69,7 @@ namespace SIS.API.Web
         public static StockPrice ScrapingStart(LoadFrom from, string code)
         {
             var exceptions = new List<Exception>();
-            var TotalNumberOfAttempts = 3;
+            var TotalNumberOfAttempts = 3/*Configurable*/;
             var numberOfAttempts = 0;
             StockPrice stockPrice = new StockPrice();
             var httpResposeMessage = string.Empty;
@@ -83,13 +83,13 @@ namespace SIS.API.Web
                     switch (from)
                     {
                         case LoadFrom.Rediff:
-                            webURL = $"https://money.rediff.com/money/jsp/current_stat.jsp?companyCode={code}";
+                            webURL = $"https://money.rediff.com/money/jsp/current_stat.jsp?companyCode={code}"/*Configurable*/;
                             httpResposeMessage = GetWebRespose(webURL).GetAwaiter().GetResult();
                             stockPrice = HtmlExtractor.FilerTheStockpriceFromRediff(httpResposeMessage);
                             found = true;
                             break;
                         case LoadFrom.Yahoo:
-                            webURL = $"https://finance.yahoo.com/quote/{code}";
+                            webURL = $"https://finance.yahoo.com/quote/{code}"/*Configurable*/;
                             httpResposeMessage = GetWebRespose(webURL).GetAwaiter().GetResult();
                             stockPrice = HtmlExtractor.FilerTheStockpriceFromYahoo(httpResposeMessage);
                             found = true;
@@ -104,7 +104,7 @@ namespace SIS.API.Web
                 {
                     exceptions.Add(ex);
                     numberOfAttempts++;
-                    Thread.Sleep(1 * 1000);
+                    Thread.Sleep(1 * 1000/*Configurable*/);
                 }
                 if (numberOfAttempts >= TotalNumberOfAttempts || found)
                     break;

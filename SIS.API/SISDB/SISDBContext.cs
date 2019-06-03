@@ -7,12 +7,14 @@ using System.Data;
 using System.Data.SQLite;
 using System.Linq;
 using System.Threading.Tasks;
+using System.IO;
+using System.Configuration;
+using Microsoft.Extensions.Configuration;
 
 namespace SIS.API.SISDB
 {
     public class SISDBContext
     {
-        private const string dbconn_string = @"URI=file:DB\SISAPI.db";
         /// <summary>
         /// Overrides the connection timeout
         /// </summary>
@@ -31,9 +33,28 @@ namespace SIS.API.SISDB
         /// <returns></returns>
         public static SQLiteConnection GetdbConnection()
         {
-            SQLiteConnection conn = new SQLiteConnection(dbconn_string);
-            conn.Open();
-            return conn;
+            try
+            {
+                //**Read from configuration appsettings.json without injection method**//
+                IConfigurationBuilder builder = new ConfigurationBuilder()
+                    .SetBasePath(Directory.GetCurrentDirectory())
+                    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+
+                IConfigurationRoot configuration = builder.Build();
+                var db_name = configuration.GetSection("DatabaseSetting").GetSection("DBName").Value;
+                var folder_name = configuration.GetSection("DatabaseSetting").GetSection("DBFolder").Value;
+
+                string dbconn_string = "URI=file:" + Path.Combine(Directory.GetCurrentDirectory(),folder_name , db_name /*Configurable*/);
+                SQLiteConnection conn = new SQLiteConnection(dbconn_string);
+                conn.Open();
+                return conn;
+            }
+            catch (SQLiteException ex)
+            {
+                System.Diagnostics.Debug.WriteLine("SQLiteException:" + ex.Message);
+                throw ex;
+            }
+            catch (Exception ex) { throw ex; }
         }
 
         //public static string ConnectionString
@@ -320,8 +341,12 @@ namespace SIS.API.SISDB
             var sSql = SISDBQueryCollection.qInsertLatestStockPrice;
             foreach (var s in sp)
             {
-                var values = ($"({s.StockID}, {s.Price}, '{s.ValueOn.ToString("yyyy-MM-dd HH:mm:ss")}'),");
-                sSql = sSql + values;
+                //Check the validity of data before adding to db
+                if (s.Price > 0 && ((s.ValueOn - DateTime.Now).TotalDays < 3/*Configurable*/))
+                {
+                    var values = ($"({s.StockID}, {s.Price}, '{s.ValueOn.ToString("yyyy-MM-dd HH:mm:ss")}'),");
+                    sSql = sSql + values;
+                }
             }
             sSql = sSql.TrimEnd(',');
             try
@@ -333,7 +358,7 @@ namespace SIS.API.SISDB
                         cmd.CommandText = sSql;
                         if (conn.State != ConnectionState.Open) conn.Open();
                         await cmd.ExecuteNonQueryAsync();
-                       // int lastID = Convert.ToInt32(cmd.ExecuteScalar());
+                        // int lastID = Convert.ToInt32(cmd.ExecuteScalar());
                     }
                 }
                 return true;
